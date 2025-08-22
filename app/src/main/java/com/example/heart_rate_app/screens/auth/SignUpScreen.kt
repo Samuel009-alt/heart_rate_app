@@ -95,7 +95,7 @@ fun SignUpScreen(navController: NavHostController) {
             // Logo with heart
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "HR",
+                    text = "HR.",
                     style = MaterialTheme.typography.headlineLarge.copy(
 //                        fontFamily = montserrat,
                         fontWeight = FontWeight.Bold,
@@ -202,7 +202,7 @@ fun SignUpScreen(navController: NavHostController) {
                         append("Sign In")
                     }
                 },
-                modifier = Modifier.clickable { navController.navigate("signin") },
+                modifier = Modifier.clickable { navController.navigate("sign_in") },
                 fontSize = 14.sp,
                 color = Color.Gray
             )
@@ -212,13 +212,7 @@ fun SignUpScreen(navController: NavHostController) {
 
 
 
-@Preview(showBackground = true)
-@Composable
-fun SignUpScreenPreview() {
-    Heart_Rate_AppTheme {
-        SignUpScreen(rememberNavController())
-    }
-}
+
 
 
 
