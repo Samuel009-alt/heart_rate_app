@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "644423341829",
+    "project_id": "heart-rate-app-a8647",
+    "storage_bucket": "heart-rate-app-a8647.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:644423341829:android:dec13479da33d7b70f496c",
+        "android_client_info": {
+          "package_name": "com.example.heart_rate_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVpo3_jxYAvtxSSZVrdmA95j_DMe823wo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
