@@ -2,10 +2,14 @@ package com.example.heart_rate_app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val DarkBlue = Color(0xFF0A3D62)   // Primary
+val SoftBlack = Color(0xFF121212)  // Background
+val OffWhite = Color(0xFFEFEFEF)   // Text on dark surfaces
+val PureWhite = Color(0xFFFFFFFF)  // Pure white
+val TransparentWhite = Color(0x99FFFFFF) // Semi-transparent white for inputs
+val Blue = Color(0xFF007AFF)       // Primary button color
+val Red = Color(0xFFE53935)        // Secondary button color
+val Green = Color(0xFF4CAF50)     // Success color
+val Yellow = Color(0xFFFFEB3B)    // Warning color
+val Orange = Color(0xFFFF9800)     // Error color
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)

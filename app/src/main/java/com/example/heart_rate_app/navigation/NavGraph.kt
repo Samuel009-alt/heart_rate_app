@@ -1,25 +1,70 @@
 package com.example.heart_rate_app.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.heart_rate_app.screens.auth.SignInScreen
 import com.example.heart_rate_app.screens.auth.SignUpScreen
-
-sealed class Screen(val route: String) {
-    object SignUpScreen : Screen("sign_up")
-    object SignInScreen : Screen("sign_in")
-}
+import com.example.heart_rate_app.screens.dashboard.DashboardScreen
+import com.example.heart_rate_app.screens.history.HistoryScreen
+import com.example.heart_rate_app.screens.onboarding.OnboardingScreen
+import com.example.heart_rate_app.screens.profile.ProfileScreen
+import com.example.heart_rate_app.viewmodel.AuthViewModel
 
 @Composable
-fun AppNavGraph(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = Screen.SignUpScreen.route) {
-        composable(Screen.SignUpScreen.route) {
-            SignUpScreen(navController)
+fun AppNavGraph(
+    authViewModel: AuthViewModel = viewModel(),
+    // LESSON: Smart start destination based on login state
+    startDestination: String =
+        if (authViewModel.isUserLoggedIn()) Routes.DASHBOARD else Routes.ONBOARDING
+) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = startDestination) {
+        // Onboarding Screen
+        composable(Routes.ONBOARDING) {
+            OnboardingScreen(
+                navController
+            )
         }
-        composable(Screen.SignInScreen.route) {
-            SignInScreen(navController)
+
+        // Sign In Screen
+        composable(Routes.SIGN_IN) {
+            SignInScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        // Sign Up Screen
+        composable(Routes.SIGN_UP) {
+            SignUpScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+
+        // Dashboard Screen
+        composable(Routes.DASHBOARD) {
+            DashboardScreen(
+                navController = navController,
+                authViewModel = authViewModel
+            )
+        }
+        composable (Routes.HISTORY){
+            HistoryScreen(
+                authViewModel = authViewModel
+            )
+        }
+        composable (Routes.PROFILE){
+            ProfileScreen(
+                authViewModel = authViewModel,
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
+            )
         }
     }
 }

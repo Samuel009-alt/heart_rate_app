@@ -1,6 +1,5 @@
 package com.example.heart_rate_app.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -9,28 +8,27 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+// Dark Theme
+val DarkColorScheme = darkColorScheme(
+    primary = DarkBlue,
+    onPrimary = PureWhite,
+    background = SoftBlack,
+    onBackground = OffWhite,
+    surface = SoftBlack,
+    onSurface = OffWhite
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+// Light Theme (optional, if you want to support both)
+val LightColorScheme = lightColorScheme(
+    primary = DarkBlue,
+    onPrimary = PureWhite,
+    background = PureWhite,
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black,
 )
 
 @Composable
@@ -40,7 +38,7 @@ fun Heart_Rate_AppTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    val colors = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -51,8 +49,8 @@ fun Heart_Rate_AppTheme(
     }
 
     MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
+        colorScheme = colors,
+        typography = AppTypography,
         content = content
     )
 }
