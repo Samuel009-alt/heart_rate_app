@@ -7,25 +7,20 @@ import com.example.heart_rate_app.data.models.UserData
 import com.example.heart_rate_app.data.repositories.AuthRepository
 import com.example.heart_rate_app.data.repositories.HeartRateRepository
 import com.example.heart_rate_app.data.repositories.UserRepository
-import com.google.firebase.auth.AuthResult
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class AuthViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
     private val userRepository: UserRepository = UserRepository(),
     private val heartRateRepository: HeartRateRepository = HeartRateRepository()
 ): ViewModel() {
-
-    // Firebase references
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
-    private val database: DatabaseReference = FirebaseDatabase.getInstance().reference
 
     // User state
     private val _currentUser = MutableStateFlow<UserData?>(null)
@@ -62,62 +57,76 @@ class AuthViewModel(
         }
     }
 
-    // Sign In
+    // SIGN IN
     fun signIn(email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            _isLoading.value = true
+            try {
+                _isLoading.value = true
+                val (success, errorMessage) = authRepository.signIn(email, password)
 
-            val (success, errorMessage) = authRepository
-                .signIn(email, password)
-            if (success){
-                authRepository.getCurrentUserId()?.let { uid ->
-                    val userData = userRepository.getUserData(uid)
-                    _currentUser.value = userData
-                    _isLoading.value = false
-                    onSuccess()
-                } ?: run {
-                    _isLoading.value = false
-                    onError("Could not get user ID")
-                }
-            } else {
-                _isLoading.value = false
-                onError(errorMessage ?: "Sign in failed")
-            }
-        }
-    }
-
-    // Sign up
-    fun signUp(fullName: String, email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            _isLoading.value = true
-
-            val (success, errorMessage) = authRepository
-                .signUp(email, password)
-            if (success){
-                authRepository.getCurrentUserId()?.let { uid ->
-                    val newUser = UserData(uid, fullName, email, null, null)
-                    val saved = userRepository.saveUserData(newUser)
-
-                    if (saved){
-                        _currentUser.value = newUser
+                if (success) {
+                    val uid = authRepository.getCurrentUserId()
+                    if (uid != null) {
+                        val userData = userRepository.getUserData(uid)
+                        if (userData != null) {
+                            _currentUser.value = userData
+                        } else {
+                            val defaultUser = UserData(uid, "User", email, null, null)
+                            userRepository.saveUserData(defaultUser)
+                            _currentUser.value = defaultUser
+                        }
                         _isLoading.value = false
+                        delay(500)
                         onSuccess()
                     } else {
-                        _isLoading.value = false
-                        onError(" Failed to save user data")
+                        onError("Could not get user ID")
                     }
-                } ?: run {
-                    _isLoading.value = false
-                    onError("Could not get user ID")
+                } else {
+                    onError(errorMessage ?: "Sign in failed")
                 }
-            } else {
+            } catch (e: Exception) {
+                onError("Login failed: ${e.message}")
+            } finally {
                 _isLoading.value = false
-                onError(errorMessage ?: "Sign up failed")
             }
         }
     }
 
-    // Update user profile
+    // SIGN UP
+    fun signUp(fullName: String, email: String, password: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                _isLoading.value = true
+                val (success, errorMessage) = authRepository.signUp(email, password)
+
+                if (success) {
+                    val uid = authRepository.getCurrentUserId()
+                    if (uid != null) {
+                        val newUser = UserData(uid, fullName, email, null, null)
+                        val saved = userRepository.saveUserData(newUser)
+                        if (saved) {
+                            _currentUser.value = newUser
+                            _isLoading.value = false
+                            delay(500)
+                            onSuccess()
+                        } else {
+                            onError("Failed to save user data")
+                        }
+                    } else {
+                        onError("Could not get user ID")
+                    }
+                } else {
+                    onError(errorMessage ?: "Sign up failed")
+                }
+            } catch (e: Exception) {
+                onError("Registration failed: ${e.message}")
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    // UPDATE PROFILE
     fun updateUserProfile(updatedUser: UserData, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             val success = userRepository.updateUserProfile(updatedUser)
@@ -128,7 +137,28 @@ class AuthViewModel(
         }
     }
 
-    // Load heart rate history
+    // SAVE HEART RATE
+    fun saveHeartRateReading(bpm: Int, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val uid = authRepository.getCurrentUserId() ?: run {
+                onResult(false)
+                return@launch
+            }
+
+            val reading = HeartRateReading(
+                bpm = bpm,
+                timestamp = System.currentTimeMillis()
+            )
+
+            val success = heartRateRepository.saveHeartRateReading(uid, reading)
+            if (success) {
+                fetchHeartRateHistory()
+            }
+            onResult(success)
+        }
+    }
+
+    // FETCH HEART RATE HISTORY
     fun fetchHeartRateHistory() {
         viewModelScope.launch {
             authRepository.getCurrentUserId()?.let { uid ->
@@ -140,38 +170,13 @@ class AuthViewModel(
         }
     }
 
-    // Fixed save heart rate reading function
-    fun saveHeartRateReading(bpm: Int, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val uid = auth.currentUser?.uid ?: run {
-                onResult(false)
-                return@launch
-            }
-
-            val reading = HeartRateReading(bpm = bpm)
-
-            try {
-                database.child("heartRateReadings").child(uid)
-                    .push()
-                    .setValue(reading)
-                    .await()
-
-                // Refresh the history after saving
-                fetchHeartRateHistory()
-                onResult(true)
-            } catch (e: Exception) {
-                onResult(false)
-            }
-        }
-    }
-
-    // Sign out
+    // SIGN OUT
     fun signOut() {
         authRepository.signOut()
         _currentUser.value = null
         _heartRateHistory.value = emptyList()
     }
 
-    // Check if user is logged in
+    // CHECK IF USER IS LOGGED IN
     fun isUserLoggedIn(): Boolean = authRepository.isUserLoggedIn()
 }

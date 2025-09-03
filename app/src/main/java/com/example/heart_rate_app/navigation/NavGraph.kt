@@ -16,9 +16,7 @@ import com.example.heart_rate_app.viewmodel.AuthViewModel
 @Composable
 fun AppNavGraph(
     authViewModel: AuthViewModel = viewModel(),
-    // LESSON: Smart start destination based on login state
-    startDestination: String =
-        if (authViewModel.isUserLoggedIn()) Routes.DASHBOARD else Routes.ONBOARDING
+    startDestination: String
 ) {
     val navController = rememberNavController()
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,25 +23,41 @@ fun HistoryScreen(
     val readings by authViewModel.heartRateHistory.collectAsState()
     val isLoading by authViewModel.isLoading.collectAsState()
 
+    // Fetch data when screen is first shown
     LaunchedEffect(Unit) {
         authViewModel.fetchHeartRateHistory()
     }
 
-    Scaffold (
+
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Heart Rate History") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                ),
+                actions = {
+                    // Add refresh button as alternative to pull-to-refresh
+                    IconButton(
+                        onClick = { authViewModel.fetchHeartRateHistory() }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh"
+                        )
+                    }
+                }
             )
         }
-    ){ padding ->
+    ) { padding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentAlignment = Alignment.Center
-        ){
-            if (isLoading){
+        ) {
+            if (isLoading) {
+                // Show loading spinner
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -48,13 +65,14 @@ fun HistoryScreen(
                     CircularProgressIndicator()
                     Text("Loading history...")
                 }
-            } else if (readings.isEmpty()){
-                Column (
+            } else if (readings.isEmpty()) {
+                // Show empty state
+                Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
-                ){
+                ) {
                     Icon(
-                        imageVector = Icons.Default.Favorite, // Fixed icon name
+                        imageVector = Icons.Default.Favorite,
                         contentDescription = "No readings",
                         modifier = Modifier.size(64.dp),
                         tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
@@ -71,12 +89,15 @@ fun HistoryScreen(
                     )
                 }
             } else {
+                // Show the list of readings
                 LazyColumn(
-                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
-                ){
+                ) {
                     items(readings) { reading ->
-                        HeartRateReadingCard(reading = reading) // Fixed parameter name
+                        HeartRateReadingCard(reading = reading)
                     }
                 }
             }

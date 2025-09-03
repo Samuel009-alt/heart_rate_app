@@ -1,5 +1,6 @@
 package com.example.heart_rate_app.screens.auth
 
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,13 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,12 +34,13 @@ fun SignInScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel()
 ){
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
 
-    // LESSON: Observe loading state from ViewModel
-    val isLoading by authViewModel.isLoading.collectAsState()
+    // Observe loading state from ViewModel
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var isLoading by remember { mutableStateOf(false) }
+
 
 
     Column(
@@ -78,11 +77,12 @@ fun SignInScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // SIGN IN BUTTON
         Button(
             onClick = {
                 when {
                     email.isBlank() || password.isBlank() -> {
-                        errorMessage = "Please enter both email and password"
+                        errorMessage = "All fields are required"
                         return@Button
                     }
                     !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
@@ -95,14 +95,14 @@ fun SignInScreen(
                     }
                     else -> {
                         errorMessage = ""
-                        authViewModel.signIn( email, password,
+                        authViewModel.signIn(email, password,
                             onSuccess = {
                                 navController.navigate(Routes.DASHBOARD) {
                                     popUpTo(Routes.SIGN_IN) { inclusive = true }
                                 }
                             },
-                            onError = {
-                                errorMessage = it
+                            onError = { error ->
+                                errorMessage = error
                             }
                         )
                     }
@@ -110,17 +110,14 @@ fun SignInScreen(
             },
             enabled = !isLoading,
             modifier = Modifier.fillMaxWidth()
-
         ) {
             Text(if (isLoading) "Signing In..." else "Sign In")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        TextButton(
-            onClick = { navController.navigate(Routes.SIGN_UP) }
-        ) {
-            Text("Create an account?")
+        TextButton(onClick = { navController.navigate(Routes.SIGN_UP) }) {
+            Text("Don't have an account? Sign Up")
         }
     }
 }

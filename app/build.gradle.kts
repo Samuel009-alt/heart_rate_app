@@ -92,6 +92,7 @@ dependencies {
     // DataStore dependencies
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.datastore:datastore-core:1.1.1")
+    implementation(libs.androidx.room.ktx)
 
     // Testing
     testImplementation(libs.junit)

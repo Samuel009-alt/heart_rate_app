@@ -7,6 +7,8 @@ import kotlinx.coroutines.tasks.await
 
 // AuthRepository.kt - Handles only authentication
 class AuthRepository {
+
+    // Firebase references
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
     // Sign in

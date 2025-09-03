@@ -10,17 +10,14 @@ import kotlinx.coroutines.tasks.await
 
 class UserRepository {
 
-    private val database: DatabaseReference =
-        FirebaseDatabase.getInstance().reference
+    private val database = Firebase.database.reference
 
 
-    // Get user data
+    // GET USER DATA - FIXED VERSION
     suspend fun getUserData(uid: String): UserData? {
         return try {
-            val snapshot: DataSnapshot = database
-                .child("users").child(uid).get().await()
+            val snapshot = database.child("users").child(uid).get().await()
 
-            // check if user exists
             if (snapshot.exists()) {
                 val fullName = snapshot.child("fullName").value as? String ?: "User"
                 val email = snapshot.child("email").value as? String ?: ""
@@ -28,26 +25,25 @@ class UserRepository {
                 val gender = snapshot.child("gender").value as? String
 
                 UserData(uid, fullName, email, age, gender)
-            } else{
+            } else {
                 null
             }
-        } catch (e: Exception){
+        } catch (e: Exception) {
             null
         }
     }
 
-    // Save user data
+    // SAVE USER DATA - FIXED VERSION
     suspend fun saveUserData(userData: UserData): Boolean {
         return try {
             val userMap = mapOf(
-                "fullName" to userData.fullName,
-                "email" to userData.email,
-                "age" to userData.age,
-                "gender" to userData.gender
+                "fullName" to (userData.fullName ?: "User"),
+                "email" to (userData.email ?: ""),
+                "age" to (userData.age ?: ""),
+                "gender" to (userData.gender ?: "")
             )
-            database
-                .child("users")
-                .child(userData.uid!!)
+
+            database.child("users").child(userData.uid ?: return false)
                 .setValue(userMap).await()
             true
         } catch (e: Exception) {
@@ -55,7 +51,7 @@ class UserRepository {
         }
     }
 
-    // Update user profile in Realtime Database
+    // UPDATE USER PROFILE - FIXED VERSION
     suspend fun updateUserProfile(userData: UserData): Boolean {
         return try {
             val userId = userData.uid ?: return false
