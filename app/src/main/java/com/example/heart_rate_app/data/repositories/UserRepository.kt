@@ -9,14 +9,15 @@ import com.google.firebase.database.database
 import kotlinx.coroutines.tasks.await
 
 class UserRepository {
-
     private val database = Firebase.database.reference
 
-
-    // GET USER DATA - FIXED VERSION
+    // GET USER DATA
     suspend fun getUserData(uid: String): UserData? {
         return try {
-            val snapshot = database.child("users").child(uid).get().await()
+            val snapshot = database.child("users")
+                .child(uid)
+                .get()
+                .await()
 
             if (snapshot.exists()) {
                 val fullName = snapshot.child("fullName").value as? String ?: "User"
@@ -33,7 +34,7 @@ class UserRepository {
         }
     }
 
-    // SAVE USER DATA - FIXED VERSION
+    // SAVE USER DATA
     suspend fun saveUserData(userData: UserData): Boolean {
         return try {
             val userMap = mapOf(
@@ -43,7 +44,8 @@ class UserRepository {
                 "gender" to (userData.gender ?: "")
             )
 
-            database.child("users").child(userData.uid ?: return false)
+            database.child("users")
+                .child(userData.uid ?: return false)
                 .setValue(userMap).await()
             true
         } catch (e: Exception) {
@@ -51,7 +53,7 @@ class UserRepository {
         }
     }
 
-    // UPDATE USER PROFILE - FIXED VERSION
+    // UPDATE USER PROFILE
     suspend fun updateUserProfile(userData: UserData): Boolean {
         return try {
             val userId = userData.uid ?: return false
@@ -61,8 +63,14 @@ class UserRepository {
             userData.email?.let { updateMap["email"] = it }
             userData.age?.let { updateMap["age"] = it }
             userData.gender?.let { updateMap["gender"] = it }
+            userData.phoneNumber?.let { updateMap["phoneNumber"] = it }
+            userData.address?.let { updateMap["address"] = it }
+            userData.profileImageUrl?.let { updateMap["profileImageUrl"] = it }
 
-            database.child("users").child(userId).updateChildren(updateMap).await()
+            database.child("users")
+                .child(userId)
+                .updateChildren(updateMap)
+                .await()
             true
         } catch (e: Exception) {
             false

@@ -9,7 +9,10 @@ val PureWhite = Color(0xFFFFFFFF)  // Pure white
 val TransparentWhite = Color(0x99FFFFFF) // Semi-transparent white for inputs
 val Blue = Color(0xFF007AFF)       // Primary button color
 val Red = Color(0xFFE53935)        // Secondary button color
-val Green = Color(0xFF4CAF50)     // Success color
 val Yellow = Color(0xFFFFEB3B)    // Warning color
 val Orange = Color(0xFFFF9800)     // Error color
 
+// Add these for better theming:
+val LightBlue = Color(0xFF4FC3F7)   // Secondary/Accent
+val LightGray = Color(0xFFBDBDBD)   // Disabled/Secondary text
+val SuccessGreen = Color(0xFF4CAF50) // Success states

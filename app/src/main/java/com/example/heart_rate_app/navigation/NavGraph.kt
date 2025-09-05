@@ -10,6 +10,7 @@ import com.example.heart_rate_app.screens.auth.SignUpScreen
 import com.example.heart_rate_app.screens.dashboard.DashboardScreen
 import com.example.heart_rate_app.screens.history.HistoryScreen
 import com.example.heart_rate_app.screens.onboarding.OnboardingScreen
+import com.example.heart_rate_app.screens.profile.ProfileConfirmationScreen
 import com.example.heart_rate_app.screens.profile.ProfileScreen
 import com.example.heart_rate_app.viewmodel.AuthViewModel
 
@@ -53,15 +54,19 @@ fun AppNavGraph(
         }
         composable (Routes.HISTORY){
             HistoryScreen(
-                authViewModel = authViewModel
+                authViewModel = authViewModel,
+                navController = navController
             )
         }
         composable (Routes.PROFILE){
             ProfileScreen(
                 authViewModel = authViewModel,
-                onSaveSuccess = {
-                    navController.popBackStack()
-                }
+                navController = navController
+            )
+        }
+        composable (Routes.PROFILE_CONFIRMATION){
+            ProfileConfirmationScreen(
+                navController = navController
             )
         }
     }

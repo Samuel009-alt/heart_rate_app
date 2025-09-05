@@ -15,26 +15,61 @@ import androidx.compose.ui.platform.LocalContext
 val DarkColorScheme = darkColorScheme(
     primary = DarkBlue,
     onPrimary = PureWhite,
+    primaryContainer = DarkBlue, // Use DarkBlue for container
+    onPrimaryContainer = PureWhite,
+
+    secondary = LightBlue, // Use your LightBlue as secondary
+    onSecondary = SoftBlack,
+    secondaryContainer = LightBlue.copy(alpha = 0.2f),
+    onSecondaryContainer = LightBlue,
+
     background = SoftBlack,
     onBackground = OffWhite,
+
     surface = SoftBlack,
-    onSurface = OffWhite
+    onSurface = OffWhite,
+
+    surfaceVariant = SoftBlack.copy(alpha = 0.8f),
+    onSurfaceVariant = LightGray, // Use your LightGray
+
+    error = Color(0xFFCF6679),
+    onError = PureWhite,
+
+    outline = LightGray, // Use LightGray for outlines
+    outlineVariant = LightGray.copy(alpha = 0.5f)
 )
 
 // Light Theme (optional, if you want to support both)
 val LightColorScheme = lightColorScheme(
     primary = DarkBlue,
     onPrimary = PureWhite,
+    primaryContainer = DarkBlue.copy(alpha = 0.1f),
+    onPrimaryContainer = DarkBlue,
+
+    secondary = LightBlue,
+    onSecondary = PureWhite,
+    secondaryContainer = LightBlue.copy(alpha = 0.1f),
+    onSecondaryContainer = LightBlue,
+
     background = PureWhite,
     onBackground = Color.Black,
-    surface = Color.White,
+
+    surface = PureWhite,
     onSurface = Color.Black,
+
+    surfaceVariant = Color(0xFFF5F5F5),
+    onSurfaceVariant = LightGray,
+
+    error = Color(0xFFB00020),
+    onError = PureWhite,
+
+    outline = LightGray,
+    outlineVariant = LightGray.copy(alpha = 0.3f)
 )
 
 @Composable
 fun Heart_Rate_AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {

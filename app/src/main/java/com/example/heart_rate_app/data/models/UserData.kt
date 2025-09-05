@@ -7,4 +7,18 @@ data class UserData (
     val email: String? = null,
     val age: Int? = null,
     val gender: String? = null,
-)
+    val phoneNumber: String? = null,
+    val address: String? = null,
+    val profileImageUrl: String? = null
+){
+    constructor() : this(
+        null,
+        null,
+        null,
+        null,
+        null,
+
+        null,
+        null,
+        null)
+}

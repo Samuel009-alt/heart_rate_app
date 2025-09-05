@@ -7,4 +7,5 @@ object Routes {
     const val DASHBOARD = "dashboard"
     const val HISTORY = "history"
     const val PROFILE = "profile"
+    const val PROFILE_CONFIRMATION = "profile_confirmation"
 }
