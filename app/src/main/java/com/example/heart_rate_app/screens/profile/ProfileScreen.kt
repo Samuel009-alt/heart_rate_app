@@ -1,212 +1,225 @@
 package com.example.heart_rate_app.screens.profile
 
-import android.R.id.message
-import android.widget.Toast
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.heart_rate_app.screens.profile.components.EditActionButtons
-import com.example.heart_rate_app.screens.profile.components.LoadingIndicator
-import com.example.heart_rate_app.screens.profile.components.PersonalInfoSection
-import com.example.heart_rate_app.screens.profile.components.ProfileHeaderSection
-import com.example.heart_rate_app.screens.profile.components.SuccessDialog
+import com.example.heart_rate_app.navigation.Routes
+import com.example.heart_rate_app.screens.profile.components.HealthMetricsSection
+import com.example.heart_rate_app.screens.profile.components.PersonalInformationSection
+import com.example.heart_rate_app.screens.profile.components.ProfileHeader
+import com.example.heart_rate_app.screens.profile.components.ProfileInfoCard
+import com.example.heart_rate_app.screens.profile.components.SignOutSection
+import com.example.heart_rate_app.ui.theme.YellowPrimary
 import com.example.heart_rate_app.viewmodel.AuthViewModel
-import com.google.firebase.ktx.BuildConfig
-import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    authViewModel: AuthViewModel = viewModel(),
-    navController: NavController
+    navController: NavController,
+    authViewModel: AuthViewModel = viewModel()
 ) {
-    val userState by authViewModel.currentUser.collectAsState()
-    val isLoading by authViewModel.isLoading.collectAsState()
+    val currentUser by authViewModel.currentUser.collectAsState()
+    val heartRateHistory by authViewModel.heartRateHistory.collectAsState()
 
-    // State variables for editing
-    var fullName by remember { mutableStateOf(userState?.fullName ?: "") }
-    var age by remember { mutableStateOf(userState?.age?.toString() ?: "") }
-    var gender by remember { mutableStateOf(userState?.gender ?: "") }
-    var phoneNumber by remember { mutableStateOf(userState?.phoneNumber ?: "") }
-    var address by remember { mutableStateOf(userState?.address ?: "") }
-    var isEditing by remember { mutableStateOf(false) }
-    var showSuccessDialog by remember { mutableStateOf(false) }
-
-
-    // Update local state whenever user data changes
-    LaunchedEffect(userState) {
-        userState?.let { user ->
-            fullName = user.fullName ?: ""
-            age = user.age?.toString() ?: ""
-            gender = user.gender ?: ""
-            phoneNumber = user.phoneNumber ?: ""
-            address = user.address ?: ""
-        }
-    }
-
-    //  Handle navigate after success
     LaunchedEffect(Unit) {
-        if (showSuccessDialog){
-            delay(1500)
-            navController.navigate("profile_confirmation")
-            isEditing = false
-            showSuccessDialog = false
-        }
+        authViewModel.fetchHeartRateHistory()
     }
 
-    Scaffold (
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        "Profile",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+    // Animation states
+    var startAnimation by remember { mutableStateOf(false) }
+    val scaleAnimation by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0.3f,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        label = "scale"
+    )
+    val rotationAnimation by animateFloatAsState(
+        targetValue = if (startAnimation) 360f else 0f,
+        animationSpec = tween(durationMillis = 1200, easing = LinearOutSlowInEasing),
+        label = "rotation"
+    )
+
+    LaunchedEffect(Unit) {
+        startAnimation = true
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFF8F9FA),
+                        Color(0xFFE9ECEF)
                     )
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                ),
-                navigationIcon = {
-                    // BACK BUTTON ADDED HERE
-                    IconButton(
-                        onClick = { navController.popBackStack() }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                },
-                actions = {
-                    if (!isEditing) {
-                        IconButton(
-                            onClick = { isEditing = true },
-                            modifier = Modifier
-                                .padding(end = 8.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit Profile",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    }
-                }
+                )
             )
-        }
-    ){ padding ->
+    ) {
+        // Enhanced decorative circles with gradients and animations
         Box(
             modifier = Modifier
+                .size(200.dp)
+                .offset(x = 280.dp, y = (-60).dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            YellowPrimary.copy(alpha = 0.8f),
+                            YellowPrimary.copy(alpha = 0.4f)
+                        )
+                    )
+                )
+                .graphicsLayer {
+                    scaleX = scaleAnimation * 0.8f
+                    scaleY = scaleAnimation * 0.8f
+                    rotationZ = rotationAnimation * 0.3f
+                }
+        )
+
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .offset(x = (-30).dp, y = 100.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF3498DB).copy(alpha = 0.6f),
+                            Color(0xFF3498DB).copy(alpha = 0.2f)
+                        )
+                    )
+                )
+                .graphicsLayer {
+                    scaleX = scaleAnimation * 0.9f
+                    scaleY = scaleAnimation * 0.9f
+                    rotationZ = -rotationAnimation * 0.5f
+                }
+        )
+
+        Box(
+            modifier = Modifier
+                .size(160.dp)
+                .offset(x = (-40).dp, y = 580.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            YellowPrimary.copy(alpha = 0.7f),
+                            YellowPrimary.copy(alpha = 0.3f)
+                        )
+                    )
+                )
+                .graphicsLayer {
+                    scaleX = scaleAnimation * 0.7f
+                    scaleY = scaleAnimation * 0.7f
+                    rotationZ = rotationAnimation * 0.4f
+                }
+        )
+
+        Box(
+            modifier = Modifier
+                .size(90.dp)
+                .offset(x = 320.dp, y = 450.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFFE74C3C).copy(alpha = 0.5f),
+                            Color(0xFFE74C3C).copy(alpha = 0.2f)
+                        )
+                    )
+                )
+                .graphicsLayer {
+                    scaleX = scaleAnimation
+                    scaleY = scaleAnimation
+                    rotationZ = -rotationAnimation * 0.6f
+                }
+        )
+
+        Box(
+            modifier = Modifier
+                .size(110.dp)
+                .offset(x = 250.dp, y = 650.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color(0xFF27AE60).copy(alpha = 0.4f),
+                            Color(0xFF27AE60).copy(alpha = 0.1f)
+                        )
+                    )
+                )
+                .graphicsLayer {
+                    scaleX = scaleAnimation * 0.6f
+                    scaleY = scaleAnimation * 0.6f
+                    rotationZ = rotationAnimation * 0.7f
+                }
+        )
+
+        LazyColumn(
+            modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .background(MaterialTheme.colorScheme.background)
-        ){
-            if (isLoading){
-                LoadingIndicator()
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
-                ) {
-                    // Profile Header with Avatar
-                    item {
-                        ProfileHeaderSection(
-                            userState = userState,
-                            isEditing = isEditing
-                        )
-                    }
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(40.dp)) }
 
-                    // Personal Information Section
-                    item {
-                        PersonalInfoSection(
-                            fullName = fullName,
-                            email = userState?.email ?: "",
-                            age = age,
-                            gender = gender,
-                            phoneNumber = phoneNumber,
-                            address = address,
-                            isEditing = isEditing,
-                            onNameChange = { fullName = it },
-                            onAgeChange = { age = it },
-                            onGenderChange = { gender = it },
-                            onPhoneChange = { phoneNumber = it },
-                            onAddressChange = { address = it }
-                        )
-                    }
+            // Header
+            item {
+                ProfileHeader(
+                    onBackClick = { navController.navigateUp() }
+                )
+            }
 
-                    // Action Buttons
-                    if (isEditing) {
-                        item {
-                            EditActionButtons(
-                                onSave = {
-                                    val updatedUser = userState?.copy(
-                                        fullName = fullName.trim(),
-                                        age = if (age.isNotEmpty()) age.toIntOrNull() else null,
-                                        gender = if (gender.isNotEmpty()) gender.trim() else null,
-                                        phoneNumber = if (phoneNumber.isNotEmpty()) phoneNumber.trim() else null,
-                                        address = if (address.isNotEmpty()) address.trim() else null
-                                    )
+            // Profile Info Card
+            item {
+                ProfileInfoCard(
+                    user = currentUser,
+                    totalReadings = heartRateHistory.size
+                )
+            }
 
-                                    if (updatedUser != null) {
-                                        authViewModel.updateUserProfile(updatedUser) { success ->
+            // Personal Information Section (without card)
+            item {
+                PersonalInformationSection(
+                    user = currentUser,
+                    onEditClick = { navController.navigate("edit_profile") }
+                )
+            }
 
-                                            // Handle success or failure
-                                            if (success) {
-                                                showSuccessDialog = true
-                                            }
-                                        }
-                                    }
-                                },
-                                onCancel = {
-                                    // Reset to original values
-                                    userState?.let { user ->
-                                        fullName = user.fullName ?: ""
-                                        age = user.age?.toString() ?: ""
-                                        gender = user.gender ?: ""
-                                        phoneNumber = user.phoneNumber ?: ""
-                                        address = user.address ?: ""
-                                    }
-                                    isEditing = false
-                                }
-                            )
+            // Health Metrics
+            item {
+                HealthMetricsSection(readings = heartRateHistory)
+            }
+
+            // Sign Out Section
+            item {
+                SignOutSection(
+                    onSignOutClick = {
+                        authViewModel.signOut()
+                        navController.navigate(Routes.SIGN_IN) {
+                            popUpTo(0) { inclusive = true }
                         }
                     }
-                }
+                )
             }
-            // Success Dialog
-            if (showSuccessDialog) {
-                SuccessDialog {
-                    showSuccessDialog = false
-                }
-            }
+
+            item { Spacer(modifier = Modifier.height(100.dp)) }
         }
     }
 }
-

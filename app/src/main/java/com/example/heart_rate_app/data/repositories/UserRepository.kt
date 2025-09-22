@@ -2,9 +2,6 @@ package com.example.heart_rate_app.data.repositories
 
 import com.example.heart_rate_app.data.models.UserData
 import com.google.firebase.Firebase
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.database
 import kotlinx.coroutines.tasks.await
 
@@ -24,8 +21,11 @@ class UserRepository {
                 val email = snapshot.child("email").value as? String ?: ""
                 val age = (snapshot.child("age").value as? Long)?.toInt()
                 val gender = snapshot.child("gender").value as? String
+                val phoneNumber = snapshot.child("phoneNumber").value as? String
+                val address = snapshot.child("address").value as? String
+                val profileImageUrl = snapshot.child("profileImageUrl").value as? String
 
-                UserData(uid, fullName, email, age, gender)
+                UserData(uid, fullName, email, age, gender, phoneNumber, address, profileImageUrl)
             } else {
                 null
             }
@@ -41,7 +41,10 @@ class UserRepository {
                 "fullName" to (userData.fullName ?: "User"),
                 "email" to (userData.email ?: ""),
                 "age" to (userData.age ?: ""),
-                "gender" to (userData.gender ?: "")
+                "gender" to (userData.gender ?: ""),
+                "phoneNumber" to (userData.phoneNumber ?: ""),
+                "address" to (userData.address ?: ""),
+                "profileImageUrl" to (userData.profileImageUrl ?: "")
             )
 
             database.child("users")

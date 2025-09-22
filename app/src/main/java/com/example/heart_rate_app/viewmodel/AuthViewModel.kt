@@ -1,5 +1,6 @@
 package com.example.heart_rate_app.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.heart_rate_app.data.models.HeartRateReading
@@ -12,9 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class AuthViewModel(
     private val authRepository: AuthRepository = AuthRepository(),
@@ -140,21 +138,31 @@ class AuthViewModel(
     // SAVE HEART RATE
     fun saveHeartRateReading(bpm: Int, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            val uid = authRepository.getCurrentUserId() ?: run {
+            try {
+                _isLoading.value = true
+                val uid = authRepository.getCurrentUserId() ?: run {
+                    _isLoading.value = false
+                    onResult(false)
+                    return@launch
+                }
+
+                val reading = HeartRateReading(
+                    bpm = bpm,
+                    timestamp = System.currentTimeMillis()
+                ).withCurrentDate() // Add this extension method call
+
+                val success = heartRateRepository.saveHeartRateReading(uid, reading)
+                if (success) {
+                    // Refresh history immediately after saving
+                    fetchHeartRateHistory()
+                }
+                onResult(success)
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error saving heart rate: ${e.message}")
                 onResult(false)
-                return@launch
+            } finally {
+                _isLoading.value = false
             }
-
-            val reading = HeartRateReading(
-                bpm = bpm,
-                timestamp = System.currentTimeMillis()
-            )
-
-            val success = heartRateRepository.saveHeartRateReading(uid, reading)
-            if (success) {
-                fetchHeartRateHistory()
-            }
-            onResult(success)
         }
     }
 
@@ -180,3 +188,4 @@ class AuthViewModel(
     // CHECK IF USER IS LOGGED IN
     fun isUserLoggedIn(): Boolean = authRepository.isUserLoggedIn()
 }
+

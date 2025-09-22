@@ -1,265 +1,324 @@
-
 package com.example.heart_rate_app.screens.dashboard
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.ExitToApp
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.heart_rate_app.navigation.Routes
-import com.example.heart_rate_app.screens.dashboard.components.ActionButton
-import com.example.heart_rate_app.screens.dashboard.components.HeartRateCircle
-import com.example.heart_rate_app.screens.dashboard.components.HistoryItem
-import com.example.heart_rate_app.screens.dashboard.components.MeasurementButton
-import com.example.heart_rate_app.screens.dashboard.components.StatisticsCard
+import com.example.heart_rate_app.data.models.HeartRateReading
+import com.example.heart_rate_app.data.models.HeartRateStatistics
+import com.example.heart_rate_app.data.models.calculateStatistics
+import com.example.heart_rate_app.data.repositories.HeartRateRepository
+import com.example.heart_rate_app.screens.dashboard.components.HealthOverviewCard
+import com.example.heart_rate_app.screens.dashboard.components.HeartRateMeasurementSection
+import com.example.heart_rate_app.screens.dashboard.components.ModernBottomNavigation
+import com.example.heart_rate_app.screens.dashboard.components.QuickStatsRow
+import com.example.heart_rate_app.screens.dashboard.components.RecentReadingsCard
+import com.example.heart_rate_app.ui.theme.YellowPrimary
 import com.example.heart_rate_app.viewmodel.AuthViewModel
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
-import kotlin.random.Random
+import kotlin.math.min
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     navController: NavController,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    val currentUser by authViewModel.currentUser.collectAsState()
-    val heartRateHistory by authViewModel.heartRateHistory.collectAsState()
-    val isLoading by authViewModel.isLoading.collectAsState()
-
-    // Local measurement state
     var currentHeartRate by remember { mutableStateOf(0) }
-    var isMeasuring by remember { mutableStateOf(false) }
-    var measurementProgress by remember { mutableStateOf(0f) }
+    var isMonitoring by remember { mutableStateOf(false) }
+    var recentReadings by remember { mutableStateOf<List<HeartRateReading>>(emptyList()) }
+    var statistics by remember { mutableStateOf(HeartRateStatistics()) }
+    var isLoading by remember { mutableStateOf(false) }
+    var saveError by remember { mutableStateOf(false) }
 
-    // Load history when screen appears
+    val repository = remember { HeartRateRepository() }
+    val currentUser = FirebaseAuth.getInstance().currentUser
+
+    // Animation states
+    var startAnimation by remember { mutableStateOf(false) }
+    val scaleAnimation by animateFloatAsState(
+        targetValue = if (startAnimation) 1f else 0.3f,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+    )
+    val rotationAnimation by animateFloatAsState(
+        targetValue = if (startAnimation) 360f else 0f,
+        animationSpec = tween(durationMillis = 1200, easing = LinearOutSlowInEasing)
+    )
+
+    // Load data when screen appears
     LaunchedEffect(Unit) {
-        authViewModel.fetchHeartRateHistory()
+        if (currentUser?.uid != null) {
+            try {
+                val readings = repository.getHeartRateHistory(currentUser.uid)
+                val stats = calculateStatistics(readings)
+                recentReadings = readings
+                statistics = stats
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
     }
 
-    // Measurement logic
-    LaunchedEffect(isMeasuring) {
-        if (isMeasuring) {
-            val measurementDuration = 5000L
-            val updateInterval = 100L
-            val totalSteps = measurementDuration / updateInterval
+    // Effect for simulating heart rate monitoring
+    LaunchedEffect(isMonitoring) {
+        if (isMonitoring) {
+            // Reset heart rate when starting monitoring
+            currentHeartRate = 0
 
-            for (step in 0 until totalSteps.toInt()) {
-                if (!isMeasuring) break
-                delay(updateInterval)
-                measurementProgress = (step + 1).toFloat() / totalSteps
-                currentHeartRate = Random.nextInt(65, 95)
+            // Simulate heart rate measurement
+            val targetBpm = (35..160).random()
+            var currentBpm = 0
+
+            // Gradual increase to simulate real measurement
+            while (currentBpm < targetBpm && isMonitoring) {
+                currentBpm = min(currentBpm + (8..20).random(), targetBpm)
+                currentHeartRate = currentBpm
+                delay(300) // Update every 300ms for smooth animation
             }
 
-            if (isMeasuring) {
-                val finalBpm = Random.nextInt(70, 85)
-                currentHeartRate = finalBpm
-                authViewModel.saveHeartRateReading(finalBpm) { success ->
-                    isMeasuring = false
-                    measurementProgress = 0f
+            // Hold the final value for 5 seconds, then auto-stop
+            if (isMonitoring) {
+                delay(5000)
+                if (isMonitoring) {  // Check if still monitoring after delay
+                    isMonitoring = false
                 }
             }
         }
     }
 
-    // Calculate statistics
-    val averageHeartRate = if (heartRateHistory.isNotEmpty()) {
-        heartRateHistory.map { it.bpm }.average().toInt()
-    } else 0
+    // Effect for saving reading after monitoring stops
+    LaunchedEffect(isMonitoring) {
+        if (!isMonitoring && currentHeartRate > 0) {
+            isLoading = true
+            saveError = false
+
+            if (currentUser?.uid != null) {
+                try {
+                    val reading = HeartRateReading(
+                        bpm = currentHeartRate,
+                        timestamp = System.currentTimeMillis()
+                    ).withCurrentDate()
+
+                    val success = repository.saveHeartRateReading(currentUser.uid, reading)
+                    if (success) {
+                        // Refresh data after saving
+                        val readings = repository.getHeartRateHistory(currentUser.uid)
+                        val stats = calculateStatistics(readings)
+                        recentReadings = readings
+                        statistics = stats
+
+                        // Also notify the ViewModel to refresh its state
+                        authViewModel.fetchHeartRateHistory()
+                    } else {
+                        saveError = true
+                    }
+                } catch (e: Exception) {
+                    saveError = true
+                } finally {
+                    isLoading = false
+                }
+            } else {
+                isLoading = false
+            }
+        }
+    }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        "Heart Rate Monitor",
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
+        bottomBar = {
+            ModernBottomNavigation(
+                navController = navController,
+                currentRoute = "dashboard",
+                authViewModel = authViewModel
             )
         }
-    ) { padding ->
+    ) { paddingValues ->
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .background(Color(0xFFF8FAFD))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFF8F9FA),
+                            Color(0xFFE9ECEF)
+                        )
+                    )
+                )
         ) {
-            LazyColumn(
+
+            // Enhanced decorative circles with gradients and animations
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .offset(x = 280.dp, y = (-60).dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                YellowPrimary.copy(alpha = 0.8f),
+                                YellowPrimary.copy(alpha = 0.4f)
+                            )
+                        )
+                    )
+                    .graphicsLayer {
+                        scaleX = scaleAnimation * 0.8f
+                        scaleY = scaleAnimation * 0.8f
+                        rotationZ = rotationAnimation * 0.3f
+                    }
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(120.dp)
+                    .offset(x = (-30).dp, y = 100.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFF3498DB).copy(alpha = 0.6f),
+                                Color(0xFF3498DB).copy(alpha = 0.2f)
+                            )
+                        )
+                    )
+                    .graphicsLayer {
+                        scaleX = scaleAnimation * 0.9f
+                        scaleY = scaleAnimation * 0.9f
+                        rotationZ = -rotationAnimation * 0.5f
+                    }
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(160.dp)
+                    .offset(x = (-40).dp, y = 580.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                YellowPrimary.copy(alpha = 0.7f),
+                                YellowPrimary.copy(alpha = 0.3f)
+                            )
+                        )
+                    )
+                    .graphicsLayer {
+                        scaleX = scaleAnimation * 0.7f
+                        scaleY = scaleAnimation * 0.7f
+                        rotationZ = rotationAnimation * 0.4f
+                    }
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(90.dp)
+                    .offset(x = 320.dp, y = 450.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFFE74C3C).copy(alpha = 0.5f),
+                                Color(0xFFE74C3C).copy(alpha = 0.2f)
+                            )
+                        )
+                    )
+                    .graphicsLayer {
+                        scaleX = scaleAnimation
+                        scaleY = scaleAnimation
+                        rotationZ = -rotationAnimation * 0.6f
+                    }
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(110.dp)
+                    .offset(x = 250.dp, y = 650.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color(0xFF27AE60).copy(alpha = 0.4f),
+                                Color(0xFF27AE60).copy(alpha = 0.1f)
+                            )
+                        )
+                    )
+                    .graphicsLayer {
+                        scaleX = scaleAnimation * 0.6f
+                        scaleY = scaleAnimation * 0.6f
+                        rotationZ = rotationAnimation * 0.7f
+                    }
+            )
+
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(paddingValues)
             ) {
-                // Welcome Section
-                item {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "Welcome back,",
-                            fontSize = 18.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            currentUser?.fullName ?: "User",
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
+                // Top Header Section with Calendar
+                DashboardTopHeader(
+                    navController = navController,
+                    authViewModel = authViewModel
+                )
 
-                // Heart Rate Circle
-                item {
-                    HeartRateCircle(
-                        heartRate = currentHeartRate,
-                        progress = measurementProgress,
-                        isMeasuring = isMeasuring
-                    )
-                }
-
-                // Status Text
-                item {
-                    Text(
-                        text = when {
-                            isMeasuring -> "Measuring... ${(measurementProgress * 100).toInt()}% complete"
-                            currentHeartRate > 0 -> "Measurement complete!"
-                            else -> "Ready to measure your heart rate"
-                        },
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // Measurement Button
-                item {
-                    MeasurementButton(
-                        isMeasuring = isMeasuring,
-                        isLoading = isLoading,
-                        onToggleMeasuring = {
-                            isMeasuring = !isMeasuring
-                            if (!isMeasuring) {
-                                measurementProgress = 0f
-                            }
-                        }
-                    )
-                }
-
-                // Statistics Card
-                item {
-                    StatisticsCard(
-                        totalReadings = heartRateHistory.size,
-                        averageHeartRate = averageHeartRate,
-                        lastReading = heartRateHistory.firstOrNull(),
-                        isLoading = isLoading
-                    )
-                }
-
-                // Quick Actions
-                item {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            "Quick Actions",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceEvenly
-                        ) {
-                            ActionButton(
-                                icon = Icons.Filled.ArrowForward,
-                                text = "History",
-                                onClick = { navController.navigate(Routes.HISTORY) }
-                            )
-
-                            ActionButton(
-                                icon = Icons.Filled.Person,
-                                text = "Profile",
-                                onClick = { navController.navigate(Routes.PROFILE) }
-                            )
-                        }
-                    }
-                }
-
-                // Recent Readings Preview
-                if (heartRateHistory.isNotEmpty()) {
+                // Main Content
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
                     item {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalAlignment = Alignment.Start
-                        ) {
-                            Text(
-                                "Recent Readings",
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
-
-                            heartRateHistory.take(3).forEach { reading ->
-                                HistoryItem(reading = reading)
-                                Spacer(modifier = Modifier.height(8.dp))
+                        // Heart Rate Measurement Circle
+                        HeartRateMeasurementSection(
+                            currentHeartRate = currentHeartRate,
+                            isMonitoring = isMonitoring,
+                            isLoading = isLoading,
+                            saveError = saveError,
+                            onStartMonitoring = {
+                                isMonitoring = true
+                                isLoading = false
+                                saveError = false
+                            },
+                            onStopMonitoring = {
+                                isMonitoring = false
                             }
-
-                            if (heartRateHistory.size > 3) {
-                                TextButton(
-                                    onClick = { navController.navigate(Routes.HISTORY) }
-                                ) {
-                                    Text("View All Readings →")
-                                }
-                            }
-                        }
+                        )
                     }
-                }
 
-                // Sign Out Button
-                item {
-                    Button(
-                        onClick = {
-                            authViewModel.signOut()
-                            navController.navigate(Routes.SIGN_IN) {
-                                popUpTo(0) { inclusive = true }
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.error,
-                            contentColor = Color.White
-                        ),
-                        modifier = Modifier.fillMaxWidth(0.6f)
-                    ) {
-                        Icon(Icons.Filled.ExitToApp, contentDescription = "Sign Out")  // FIXED: Use Icons.Filled
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Sign Out")
+                    item {
+                        // Health Overview
+                        HealthOverviewCard(statistics = statistics)
                     }
-                }
 
-                // Bottom Spacer
-                item {
-                    Spacer(modifier = Modifier.height(32.dp))
+                    item {
+                        // Quick Stats Row
+                        QuickStatsRow(statistics = statistics)
+                    }
+
+                    item {
+                        // Recent Readings
+                        RecentReadingsCard(
+                            readings = recentReadings.take(5),
+                            onViewAll = {
+                                navController.navigate("history")
+                            }
+                        )
+                    }
                 }
             }
         }

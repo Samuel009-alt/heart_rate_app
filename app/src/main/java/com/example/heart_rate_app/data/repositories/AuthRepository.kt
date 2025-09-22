@@ -1,13 +1,9 @@
 package com.example.heart_rate_app.data.repositories
 
-import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.auth
 import kotlinx.coroutines.tasks.await
 
-// AuthRepository.kt - Handles only authentication
 class AuthRepository {
-
     // Firebase references
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
@@ -36,7 +32,6 @@ class AuthRepository {
 
     // Get current user ID
     fun getCurrentUserId(): String? = auth.currentUser?.uid
-
 
     // Sign out
     fun signOut() {

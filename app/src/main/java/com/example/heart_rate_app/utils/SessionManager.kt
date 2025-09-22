@@ -6,17 +6,13 @@ import kotlinx.coroutines.flow.map
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.catch
 import okio.IOException
 
-
 // DataStore Extension Property
 private val Context.dataStore by preferencesDataStore(name = "user_prefs")
-
 class SessionManager(private val context: Context) {
-
     companion object {
         // Preference Keys
         private val ONBOARD_COMPLETED_KEY = booleanPreferencesKey("onboard_completed")

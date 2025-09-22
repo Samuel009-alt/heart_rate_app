@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.implementation
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -45,8 +47,6 @@ android {
         compose = true
     }
 
-    // Removed deprecated composeOptions - now handled by kotlin-compose plugin
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -78,8 +78,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation("com.google.firebase:firebase-database-ktx")
 
-    // ADD THESE MISSING DEPENDENCIES:
-    // Coroutines (CRITICAL - this fixes the await() errors)
+    // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
@@ -94,6 +93,10 @@ dependencies {
     implementation("androidx.datastore:datastore-core:1.1.1")
     implementation(libs.androidx.room.ktx)
 
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("org.json:json:20230618")
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -102,4 +105,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Google Auth
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("androidx.compose.material:material-icons-extended:1.6.8")
 }
