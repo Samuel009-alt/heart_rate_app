@@ -582,7 +582,7 @@ fun ProfileConfirmationScreen(
                             )
                         } else {
                             Icon(
-                                Icons.Outlined.Save,
+                                Icons.Outlined.CheckCircle,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp)
                             )

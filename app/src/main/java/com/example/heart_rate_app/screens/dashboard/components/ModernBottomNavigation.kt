@@ -41,7 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.heart_rate_app.navigation.Routes
+import com.example.heart_rate_app.ui.theme.Red
 import com.example.heart_rate_app.ui.theme.SoftBlack
+import com.example.heart_rate_app.ui.theme.YellowPrimary
 import com.example.heart_rate_app.viewmodel.AuthViewModel
 
 @Composable
@@ -90,73 +92,13 @@ fun ModernBottomNavigation(
                 isSelected = currentRoute == "profile",
                 onClick = { navController.navigate("profile") }
             )
-            BottomNavItem(
-                icon = Icons.Outlined.AccountCircle,
-                label = "LOGOUT",
-                isSelected = false,
-                onClick = { showLogoutDialog = true }
-            )
+//            BottomNavItem(
+//                icon = Icons.Outlined.AccountCircle,
+//                label = "LOGOUT",
+//                isSelected = false,
+//                onClick = { showLogoutDialog = true }
+//            )
         }
-    }
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Outlined.ExitToApp,
-                        contentDescription = null,
-                        tint = Color(0xFFE74C3C),
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Sign Out",
-                        fontWeight = FontWeight.Bold,
-                        color = SoftBlack
-                    )
-                }
-            },
-            text = {
-                Text(
-                    text = "Are you sure you want to sign out of your account?",
-                    color = Color(0xFF6C757D),
-                    lineHeight = 20.sp
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLogoutDialog = false
-                        authViewModel.signOut()
-                        navController.navigate(Routes.SIGN_IN) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = SoftBlack
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Sign Out", color = Color.White, fontWeight = FontWeight.SemiBold)
-                }
-            },
-            dismissButton = {
-                OutlinedButton(
-                    onClick = { showLogoutDialog = false },
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = SoftBlack
-                    ),
-                    border = BorderStroke(1.dp, Color(0xFFDEE2E6)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("Cancel", fontWeight = FontWeight.SemiBold)
-                }
-            },
-            shape = RoundedCornerShape(16.dp)
-        )
     }
 }
 
@@ -177,7 +119,7 @@ fun BottomNavItem(
             imageVector = icon,
             contentDescription = label,
             tint = if (isSelected)
-                Color(0xFF3498DB) else SoftBlack,
+                YellowPrimary else SoftBlack,
             modifier = Modifier.size(24.dp)
         )
         Spacer(modifier = Modifier.height(6.dp))
@@ -185,8 +127,8 @@ fun BottomNavItem(
             text = label,
             fontSize = 11.sp,
             color = if (isSelected)
-                Color(0xFF3498DB) else SoftBlack,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                YellowPrimary else SoftBlack,
+            fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.Bold
         )
     }
 }

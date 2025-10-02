@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.example.heart_rate_app.ui.theme.PureWhite
 import com.example.heart_rate_app.ui.theme.SoftBlack
 
-
 @Composable
 fun SignOutSection(onSignOutClick: () -> Unit) {
     Card(

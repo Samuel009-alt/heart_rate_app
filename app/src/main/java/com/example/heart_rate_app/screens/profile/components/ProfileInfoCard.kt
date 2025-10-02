@@ -35,7 +35,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.heart_rate_app.data.models.UserData
 
-
 @Composable
 fun ProfileInfoCard(
     user: UserData?,

@@ -59,6 +59,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -616,68 +617,96 @@ fun EditProfileScreen(
                         isLast = true
                     )
 
-                    Spacer(modifier = Modifier.height(35.dp))
+                    Spacer(modifier = Modifier.height(30.dp))
                 }
 
-                // Save button with improved loading state
-                Button(
-                    onClick = {
-                        currentUser?.let { user ->
-                            val updatedUser = user.copy(
-                                fullName = fullName.trim(),
-                                email = email.trim(),
-                                phoneNumber = phoneNumber.trim().takeIf { it.isNotEmpty() },
-                                address = address.trim().takeIf { it.isNotEmpty() },
-                                age = age.trim().toIntOrNull(),
-                                gender = gender.takeIf { it.isNotEmpty() },
-                                profileImageUrl = profileImageUrl.takeIf { it.isNotEmpty() }
-                            )
-
-                            authViewModel.updateUserProfile(updatedUser) { success ->
-                                if (success) {
-                                    navController.navigate( "profile_confirmation" )
-                                } else {
-                                    Toast.makeText(context, "Failed to update profile", Toast.LENGTH_SHORT).show()
-                                }
-                            }
-                        }
-                    },
-                    enabled = fullName.isNotBlank() && email.isNotBlank() && !isLoading && !isUploading,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (fullName.isNotBlank() && email.isNotBlank() && !isLoading && !isUploading) {
-                            SoftBlack
-                        } else {
-                            Color.Gray
-                        },
-                        contentColor = Color.White
-                    ),
-                    shape = RoundedCornerShape(28.dp)
+                // Action buttons with enhanced styling
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    if (isLoading || isUploading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
-                            strokeWidth = 2.dp,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = if (isUploading) "Uploading..." else "Saving...",
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    } else {
+                    // Cancel Button
+                    OutlinedButton(
+                        onClick = { navController.navigateUp() },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = SoftBlack
+                        ),
+                        shape = RoundedCornerShape(28.dp)
+                    ) {
                         Icon(
-                            Icons.Outlined.Save,
+                            Icons.Outlined.Cancel,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Save Changes",
+                            text = "Cancel",
                             fontWeight = FontWeight.SemiBold
                         )
+                    }
+
+                    // Save button with improved loading state
+                    Button(
+                        onClick = {
+                            currentUser?.let { user ->
+                                val updatedUser = user.copy(
+                                    fullName = fullName.trim(),
+                                    email = email.trim(),
+                                    phoneNumber = phoneNumber.trim().takeIf { it.isNotEmpty() },
+                                    address = address.trim().takeIf { it.isNotEmpty() },
+                                    age = age.trim().toIntOrNull(),
+                                    gender = gender.takeIf { it.isNotEmpty() },
+                                    profileImageUrl = profileImageUrl.takeIf { it.isNotEmpty() }
+                                )
+
+                                authViewModel.updateUserProfile(updatedUser) { success ->
+                                    if (success) {
+                                        navController.navigate( "profile_confirmation" )
+                                    } else {
+                                        Toast.makeText(context, "Failed to update profile", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        },
+                        enabled = fullName.isNotBlank() && email.isNotBlank() && !isLoading && !isUploading,
+                        modifier = Modifier
+                            .height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (fullName.isNotBlank() && email.isNotBlank() && !isLoading && !isUploading) {
+                                SoftBlack
+                            } else {
+                                Color.Gray
+                            },
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(28.dp),
+                    ) {
+                        if (isLoading || isUploading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = if (isUploading) "Uploading..." else "Saving...",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        } else {
+                            Icon(
+                                Icons.Outlined.Save,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Save Changes",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
 
